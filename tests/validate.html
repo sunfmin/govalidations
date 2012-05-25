@@ -1,0 +1,21 @@
+{{if .Errors}}
+
+<ul class="errors">
+{{range .Errors}}
+	<li class="{{.Name}}">{{.Message}}</li>
+{{end}}
+</ul>
+
+{{end}}
+
+
+<form>
+	<div class="{{.Errors.IfHasThen "Username" "has-error" }}">
+		<input name="Username" type="input">
+		{{if .Errors.Has "Username"}}
+		<div class="error">
+			{{.Errors.On "Username"}}
+		</div>
+		{{end}}
+	</div>
+</form>
