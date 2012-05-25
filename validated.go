@@ -12,6 +12,10 @@ type Validated struct {
 	Errors Errors
 }
 
+func (vd *Validated) HasError() bool {
+	return len(vd.Errors) > 0
+}
+
 func (es Errors) Has(name string) bool {
 	for _, e := range es {
 		if e.Name == name {
