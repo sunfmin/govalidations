@@ -32,10 +32,8 @@ func UserGateKeeper() (gk *govalidations.GateKeeper) {
 		return object.(*User).Username
 	}, "Username", "Username can't be blank"))
 
-	gk.Add(govalidations.Custom(func(object interface{}) interface{} {
-		return object.(*User).Age
-	}, func(object interface{}) bool {
-		age := object.(int)
+	gk.Add(govalidations.Custom(func(object interface{}) bool {
+		age := object.(*User).Age
 		if age < 18 {
 			return false
 		}
