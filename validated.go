@@ -1,5 +1,9 @@
 package govalidations
 
+import (
+	"encoding/json"
+)
+
 type Error struct {
 	Name    string
 	Message string
@@ -14,6 +18,14 @@ type Validated struct {
 
 func (vd *Validated) HasError() bool {
 	return len(vd.Errors) > 0
+}
+
+func (vd *Validated) ToJson() (r []byte) {
+	r, err := json.Marshal(vd)
+	if err != nil {
+		panic(err)
+	}
+	return
 }
 
 func (es Errors) Has(name string) bool {
