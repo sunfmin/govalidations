@@ -20,6 +20,14 @@ func (vd *Validated) HasError() bool {
 	return len(vd.Errors) > 0
 }
 
+func (vd *Validated) AddError(name string, message string) {
+	vd.Errors = append(vd.Errors, &Error{
+		Name:    name,
+		Message: message,
+	})
+	return
+}
+
 func (vd *Validated) ToJson() (r []byte) {
 	r, err := json.Marshal(vd)
 	if err != nil {
