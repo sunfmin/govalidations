@@ -36,3 +36,17 @@ func Presence(vg ValueGetter, name string, message string) Validator {
 		return strings.Trim(value, " 　") != ""
 	}, name, message)
 }
+
+func Limitation(vg ValueGetter, min int, max int, name string, message string) (Validator){
+        return Custom(func(object interface{}) bool {
+                value := vg(object).(string)
+                return len(value) >= min && len(value) <= max
+        }, name, message)
+}
+
+func Equation(vg ValueGetter, text string, name string, message string) (Validator){
+        return Custom(func(object interface{}) bool {
+                value := vg(object).(string)
+                return value == text
+        }, name, message)
+}

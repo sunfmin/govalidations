@@ -13,6 +13,11 @@ func (gk *GateKeeper) Add(vd Validator) (r *GateKeeper) {
 	return gk
 }
 
+func (gk *GateKeeper) Join(newgk *GateKeeper) (r *GateKeeper) {
+	gk.Validators = append(gk.Validators, newgk.Validators ... )
+	return gk
+}
+
 func (gk *GateKeeper) Validate(object interface{}) (r *Validated) {
 	r = &Validated{}
 	r.Object = object

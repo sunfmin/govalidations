@@ -30,7 +30,15 @@ func UserGateKeeper() (gk *govalidations.GateKeeper) {
 
 	gk.Add(govalidations.Presence(func(object interface{}) interface{} {
 		return object.(*User).Username
-	}, "Username", "Username can't be blank"))
+	}, "Username", "Username can not be blank"))
+
+	gk.Add(govalidations.Limitation(func(object interface{}) interface{} {
+		return object.(*User).Username
+	}, 0, 10, "Username", "Username can not be too long"))
+
+	gk.Add(govalidations.Equation(func(object interface{}) interface{} {
+		return object.(*User).Email
+	}, "kiss@thefire.com", "Email", "Emails must be the same"))
 
 	gk.Add(govalidations.Custom(func(object interface{}) bool {
 		age := object.(*User).Age
@@ -68,6 +76,31 @@ func theMux() (sm *http.ServeMux) {
 	return
 }
 
+func aMux() (sm *http.ServeMux) {
+	sm = http.NewServeMux()
+
+	tpl := template.Must(template.ParseGlob("validate.html"))
+
+	gk := UserGateKeeper()
+
+	sm.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
+		u := &User{
+			Username: "i like to move it move it",
+			Email:    "kiss@therain.com",
+		}
+
+		vd := gk.Validate(u)
+		if vd.HasError() {
+			tpl.Execute(w, vd)
+			return
+		}
+
+		fmt.Fprintln(w, "Yeah!")
+	})
+
+	return
+}
+
 func TestRenderErrors(t *testing.T) {
 	ts := httptest.NewServer(theMux())
 	defer ts.Close()
@@ -80,6 +113,35 @@ func TestRenderErrors(t *testing.T) {
 		t.Error(body)
 	}
 	if !strings.Contains(body, "You must be a grown man") {
+		t.Error(body)
+	}
+	if !strings.Contains(body, "Username can not be blank") {
+		t.Error(body)
+	}
+}
+
+func TestRenderLimitationErrors(t *testing.T) {
+	ts := httptest.NewServer(aMux())
+	defer ts.Close()
+
+        r, _ := http.Get(ts.URL + "/validate")
+
+        b, _ := ioutil.ReadAll(r.Body)
+        body := string(b)
+	if !strings.Contains(body, "Username can not be too long") {
+		t.Error(body)
+	}
+}
+
+func TestRenderEquationErrors(t *testing.T) {
+	ts := httptest.NewServer(aMux())
+	defer ts.Close()
+
+        r, _ := http.Get(ts.URL + "/validate")
+
+        b, _ := ioutil.ReadAll(r.Body)
+        body := string(b)
+	if !strings.Contains(body, "Emails must be the same") {
 		t.Error(body)
 	}
 }
