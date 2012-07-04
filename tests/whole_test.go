@@ -36,10 +36,6 @@ func UserGateKeeper() (gk *govalidations.GateKeeper) {
 		return object.(*User).Username
 	}, 0, 10, "Username", "Username can not be too long"))
 
-	gk.Add(govalidations.Equation(func(object interface{}) interface{} {
-		return object.(*User).Email
-	}, "kiss@thefire.com", "Email", "Emails must be the same"))
-
 	gk.Add(govalidations.Custom(func(object interface{}) bool {
 		age := object.(*User).Age
 		if age < 18 {
@@ -124,24 +120,11 @@ func TestRenderLimitationErrors(t *testing.T) {
 	ts := httptest.NewServer(aMux())
 	defer ts.Close()
 
-        r, _ := http.Get(ts.URL + "/validate")
+	r, _ := http.Get(ts.URL + "/validate")
 
-        b, _ := ioutil.ReadAll(r.Body)
-        body := string(b)
+	b, _ := ioutil.ReadAll(r.Body)
+	body := string(b)
 	if !strings.Contains(body, "Username can not be too long") {
-		t.Error(body)
-	}
-}
-
-func TestRenderEquationErrors(t *testing.T) {
-	ts := httptest.NewServer(aMux())
-	defer ts.Close()
-
-        r, _ := http.Get(ts.URL + "/validate")
-
-        b, _ := ioutil.ReadAll(r.Body)
-        body := string(b)
-	if !strings.Contains(body, "Emails must be the same") {
 		t.Error(body)
 	}
 }

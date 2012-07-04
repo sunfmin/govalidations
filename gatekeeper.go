@@ -14,7 +14,7 @@ func (gk *GateKeeper) Add(vd Validator) (r *GateKeeper) {
 }
 
 func (gk *GateKeeper) Join(newgk *GateKeeper) (r *GateKeeper) {
-	gk.Validators = append(gk.Validators, newgk.Validators ... )
+	gk.Validators = append(gk.Validators, newgk.Validators...)
 	return gk
 }
 
