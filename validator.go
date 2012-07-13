@@ -40,6 +40,7 @@ func Presence(vg ValueGetter, name string, message string) Validator {
 func Limitation(vg ValueGetter, min int, max int, name string, message string) Validator {
 	return Custom(func(object interface{}) bool {
 		value := vg(object).(string)
-		return len(value) >= min && len(value) <= max
+		return len(value) >= min && len(value) <= max || //it will be overlapped with the Presence
+			len(value) == 0 //Error must not be overlapped 
 	}, name, message)
 }
