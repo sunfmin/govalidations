@@ -36,6 +36,10 @@ func UserGateKeeper() (gk *govalidations.GateKeeper) {
 		return object.(*User).Username
 	}, 0, 10, "Username", "Username can not be too long"))
 
+	gk.Add(govalidations.Prohibition(func(object interface{}) interface{} {
+		return object.(*User).Username
+	}, 10, 20, "Username", "Username must less than 10 or more than 20"))
+
 	gk.Add(govalidations.Custom(func(object interface{}) bool {
 		age := object.(*User).Age
 		if age < 18 {
@@ -97,6 +101,31 @@ func aMux() (sm *http.ServeMux) {
 	return
 }
 
+func prohibitionMux() (sm *http.ServeMux) {
+	sm = http.NewServeMux()
+
+	tpl := template.Must(template.ParseGlob("validate.html"))
+
+	gk := UserGateKeeper()
+
+	sm.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
+		u := &User{
+			Username: "12345678901112",
+			Email:    "kiss@therain.com",
+		}
+
+		vd := gk.Validate(u)
+		if vd.HasError() {
+			tpl.Execute(w, vd)
+			return
+		}
+
+		fmt.Fprintln(w, "Yeah!")
+	})
+
+	return
+}
+
 func TestRenderErrors(t *testing.T) {
 	ts := httptest.NewServer(theMux())
 	defer ts.Close()
@@ -125,6 +154,19 @@ func TestRenderLimitationErrors(t *testing.T) {
 	b, _ := ioutil.ReadAll(r.Body)
 	body := string(b)
 	if !strings.Contains(body, "Username can not be too long") {
+		t.Error(body)
+	}
+}
+
+func TestRenderProhibitionErrors(t *testing.T) {
+	ts := httptest.NewServer(prohibitionMux())
+	defer ts.Close()
+
+	r, _ := http.Get(ts.URL + "/validate")
+
+	b, _ := ioutil.ReadAll(r.Body)
+	body := string(b)
+	if !strings.Contains(body, "Username must less than 10 or more than 20") {
 		t.Error(body)
 	}
 }
