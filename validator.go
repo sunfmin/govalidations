@@ -43,3 +43,10 @@ func Limitation(vg ValueGetter, min int, max int, name string, message string) V
 		return len(value) >= min && len(value) <= max
 	}, name, message)
 }
+
+func Prohibition(vg ValueGetter, min int, max int, name string, message string) Validator {
+	return Custom(func(object interface{}) bool {
+		value := vg(object).(string)
+		return len(value) < min || len(value) > max
+	}, name, message)
+}
