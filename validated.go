@@ -28,6 +28,21 @@ func (vd *Validated) AddError(name string, message string) {
 	return
 }
 
+func (vd *Validated) Code() string {
+	return "405"
+}
+
+func (vd *Validated) Error() string {
+	return "validation error"
+}
+
+func (vd *Validated) ToError() (err error) {
+	if vd.HasError() {
+		return vd
+	}
+	return nil
+}
+
 func (vd *Validated) ToJson() (r []byte) {
 	r, err := json.Marshal(vd)
 	if err != nil {
