@@ -17,7 +17,24 @@ type Validated struct {
 }
 
 func (vd *Validated) HasError() bool {
+	vd.UniqErrors()
 	return len(vd.Errors) > 0
+}
+
+func (vd *Validated) UniqErrors() {
+	var tErrors Errors
+	for _, iError := range vd.Errors {
+		skip := false
+		for _, tError := range tErrors {
+			if iError.Name == tError.Name && iError.Message == tError.Message {
+				skip = true
+			}
+		}
+		if !skip {
+			tErrors = append(tErrors, iError)
+		}
+	}
+	vd.Errors = tErrors
 }
 
 func (vd *Validated) AddError(name string, message string) {
