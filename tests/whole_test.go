@@ -21,6 +21,24 @@ type User struct {
 	Age       int
 }
 
+var BlackListMessage = "You are in blacklist, lol :D"
+var WhiteListMessage = "You are in whitelist, lol :D"
+
+func MessageSwitcherGateKeeper() (gk *govalidations.GateKeeper) {
+	gk = govalidations.NewGateKeeper()
+	gk.Add(govalidations.MessageSwitcher(func(object interface{}) string {
+		name := object.(*User).Username
+		if name == "Kioshi" {
+			return BlackListMessage
+		}
+		if name == "Roku" {
+			return WhiteListMessage
+		}
+		return ""
+	}, "Username"))
+	return
+}
+
 func UserGateKeeper() (gk *govalidations.GateKeeper) {
 	gk = govalidations.NewGateKeeper()
 
@@ -101,6 +119,44 @@ func aMux() (sm *http.ServeMux) {
 	return
 }
 
+func rokuMux() (sm *http.ServeMux) {
+	sm = http.NewServeMux()
+	tpl := template.Must(template.ParseGlob("validate.html"))
+	gk := MessageSwitcherGateKeeper()
+	sm.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
+		u := &User{
+			Username: "Roku",
+			Email:    "roku@avatar.com",
+		}
+		vd := gk.Validate(u)
+		if vd.HasError() {
+			tpl.Execute(w, vd)
+			return
+		}
+		fmt.Fprintln(w, "Yeah!")
+	})
+	return
+}
+
+func kioshiMux() (sm *http.ServeMux) {
+	sm = http.NewServeMux()
+	tpl := template.Must(template.ParseGlob("validate.html"))
+	gk := MessageSwitcherGateKeeper()
+	sm.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
+		u := &User{
+			Username: "Kioshi",
+			Email:    "kioshi@avatar.com",
+		}
+		vd := gk.Validate(u)
+		if vd.HasError() {
+			tpl.Execute(w, vd)
+			return
+		}
+		fmt.Fprintln(w, "Yeah!")
+	})
+	return
+}
+
 func prohibitionMux() (sm *http.ServeMux) {
 	sm = http.NewServeMux()
 
@@ -154,6 +210,36 @@ func TestRenderLimitationErrors(t *testing.T) {
 	b, _ := ioutil.ReadAll(r.Body)
 	body := string(b)
 	if !strings.Contains(body, "Username can not be too long") {
+		t.Error(body)
+	}
+}
+
+func TestRenderMessageSwitcher(t *testing.T) {
+	ts := httptest.NewServer(kioshiMux())
+	defer ts.Close()
+
+	r, _ := http.Get(ts.URL + "/validate")
+
+	b, _ := ioutil.ReadAll(r.Body)
+	body := string(b)
+	if !strings.Contains(body, BlackListMessage) {
+		t.Error(body)
+	}
+	if strings.Contains(body, WhiteListMessage) {
+		t.Error(body)
+	}
+
+	ts = httptest.NewServer(rokuMux())
+	defer ts.Close()
+
+	r, _ = http.Get(ts.URL + "/validate")
+
+	b, _ = ioutil.ReadAll(r.Body)
+	body = string(b)
+	if !strings.Contains(body, WhiteListMessage) {
+		t.Error(body)
+	}
+	if strings.Contains(body, BlackListMessage) {
 		t.Error(body)
 	}
 }

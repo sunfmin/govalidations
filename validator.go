@@ -9,6 +9,20 @@ type ValueGetter func(object interface{}) interface{}
 
 type Validator func(object interface{}) []*Error
 
+func MessageSwitcher(vd func(object interface{}) string, name string) Validator {
+	return func(object interface{}) (r []*Error) {
+		message := vd(object)
+		if message == "" {
+			return
+		}
+		r = append(r, &Error{
+			Name:    name,
+			Message: message,
+		})
+		return
+	}
+}
+
 func Custom(vd func(object interface{}) bool, name string, message string) Validator {
 	return func(object interface{}) (r []*Error) {
 		if vd(object) {
