@@ -58,6 +58,10 @@ func UserGateKeeper() (gk *govalidations.GateKeeper) {
 		return object.(*User).Username
 	}, 10, 20, "Username", "Username must less than 10 or more than 20"))
 
+	gk.Add(govalidations.AvoidScriptTag(func(object interface{}) interface{} {
+		return object.(*User).Username
+	}, "Username", "Username can contains html script tag"))
+
 	gk.Add(govalidations.Custom(func(object interface{}) bool {
 		age := object.(*User).Age
 		if age < 18 {
@@ -157,6 +161,31 @@ func kioshiMux() (sm *http.ServeMux) {
 	return
 }
 
+func avoidScriptTagMux() (sm *http.ServeMux) {
+	sm = http.NewServeMux()
+
+	tpl := template.Must(template.ParseGlob("validate.html"))
+
+	gk := UserGateKeeper()
+
+	sm.HandleFunc("/validate", func(w http.ResponseWriter, r *http.Request) {
+		u := &User{
+			Username: `<script>alert("x")<\script>`,
+			Email:    "kiss@therain.com",
+		}
+
+		vd := gk.Validate(u)
+		if vd.HasError() {
+			tpl.Execute(w, vd)
+			return
+		}
+
+		fmt.Fprintln(w, "Yeah!")
+	})
+
+	return
+}
+
 func prohibitionMux() (sm *http.ServeMux) {
 	sm = http.NewServeMux()
 
@@ -210,6 +239,19 @@ func TestRenderLimitationErrors(t *testing.T) {
 	b, _ := ioutil.ReadAll(r.Body)
 	body := string(b)
 	if !strings.Contains(body, "Username can not be too long") {
+		t.Error(body)
+	}
+}
+
+func TestRenderAvoidScriptTagErrors(t *testing.T) {
+	ts := httptest.NewServer(avoidScriptTagMux())
+	defer ts.Close()
+
+	r, _ := http.Get(ts.URL + "/validate")
+
+	b, _ := ioutil.ReadAll(r.Body)
+	body := string(b)
+	if !strings.Contains(body, "Username can contains html script tag") {
 		t.Error(body)
 	}
 }
