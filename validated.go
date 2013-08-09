@@ -50,7 +50,11 @@ func (vd *Validated) Code() string {
 }
 
 func (vd *Validated) Error() string {
-	return "validation error"
+	errStr := ""
+	for _, iError := range vd.Errors {
+		errStr = errStr + iError.Name + ":" + iError.Message + "\n"
+	}
+	return errStr
 }
 
 func (vd *Validated) ToError() (err error) {
